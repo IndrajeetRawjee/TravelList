@@ -11,15 +11,18 @@ export default function App() {
   }
 
   function handleToggleItem(id){
-    setItems((items)=> items.map(item=> item.id == id ? {...item, packed: !item.packed} : item));
+    setItems((items)=> items.map(item=> item.id === id ? {...item, packed: !item.packed} : item));
   }
 
+  function handleClearItem(){
+    setItems([]);
+  }
   return (
     <div className="app">
       <Logo/>
       <Form onAddItems = {handleItems}/>
-      <PackingList items={items} onDeleteItem = {handleDelete} onToggleItem={handleToggleItem} />
-      <Stats/>
+      <PackingList items={items} onDeleteItem = {handleDelete} onToggleItem={handleToggleItem} onClearItem={handleClearItem}/>
+      <Stats items={items}/>
     </div>
   );
 }
@@ -55,12 +58,37 @@ function Form({onAddItems}){
   
 }
 
-function PackingList({items, onDeleteItem, onToggleItem}){
+function PackingList({items, onDeleteItem, onToggleItem, onClearItem}){
+
+  const [sortBy,setSortBy]= useState('input');
+
+  let sortedItems;
+
+  if (sortBy==='input')sortedItems=items;
+
+  if (sortBy==='description')sortedItems=items.slice().sort((a,b)=>a.description.localeCompare(b.description));
+
+  if (sortBy==='packed')sortedItems=items.slice().sort((a,b)=>Number(a.packed)-Number(b.packed));
+  
+
   return <div className="list"><ul>
-    {items.map((item)=>
+    {sortedItems.map((item)=>
      <Item item ={item} key={item.id} onDeleteItem={onDeleteItem} onToggleItem={onToggleItem}
      />)}
-  </ul></div>
+  </ul>
+  
+  <div className="actions">
+    <select value={sortBy} onChange={(e)=>setSortBy(e.target.value)}> 
+      <option value='input'>Sort By input</option>
+      <option value='description'>Sort By description</option>
+      <option value='packed'>Sort By packed</option>
+    </select>
+    <button onClick={onClearItem}>Clear List</button>
+  </div>
+  
+  
+  
+  </div>
   
 }
 function Item({item, onDeleteItem, onToggleItem}){
@@ -72,10 +100,15 @@ function Item({item, onDeleteItem, onToggleItem}){
   </li>
 };
 
-function Stats(){
+function Stats({items}){
+  const numItems = items.length;
+  const packedItems = items.filter((items)=>items.packed).length;
+  const percentPacked = Math.round(packedItems/numItems*100);
+
   return <div>
-    <footer className="stats">
-      You have X items on your list, and you already packed X (X%)
+    <footer className="stats">{
+      `You have ${numItems} items on your list, and you already packed ${packedItems}  (${percentPacked}%)`
+    }
     </footer>
   </div>
 }
